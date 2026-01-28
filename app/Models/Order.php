@@ -39,4 +39,10 @@ class Order extends Model
     {
         return $this->belongsTo(Table::class);  // Relasi dengan Table
     }
+
+    public function items()
+{
+    return $this->hasMany(\App\Models\OrderItem::class);
+}
+
 }

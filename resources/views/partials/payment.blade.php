@@ -23,6 +23,9 @@
 
                         <div class="upload-input-wrapper">
                             <input type="file" id="paymentProof" accept="image/*">
+                            <span id="proofError" style="color: red; font-size: 13px; display: none; margin-top: 8px;">
+                            Silakan upload bukti pembayaran terlebih dahulu
+                        </span>
                         </div>
                         <img id="uploadPreview" style="width: 100%; margin-top: 10px; border-radius: 8px; display: none;">
 
@@ -41,18 +44,13 @@
                         </button>
                     
                         <small class="upload-hint">Format: JPG, PNG. Maks 5MB.</small>
+                        
+
                     </div>
 
                 </div>
 
                 <!-- KASIR SECTION -->
-                <div id="kasirSection" style="display: none; margin-bottom: 20px;">
-                    <h3 class="payment-subtitle">Pembayaran di Kasir</h3>
-                
-                    <p style="margin-top: 10px;">
-                        Silahkan lakukan pembayaran langsung ke kasir.
-                    </p>
-                </div>
                     <h3 class="payment-subtitle">Ringkasan Pesanan</h3>
                     <div id="paymentSummary" class="payment-summary"></div>
                     <div class="payment-total-row">

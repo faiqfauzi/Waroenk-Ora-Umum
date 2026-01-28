@@ -61,19 +61,28 @@
 
     {{-- Success Modal --}}
     <div class="cart-modal" id="successModal">
-        <div class="cart-content success-content">
-            <div class="success-icon">✓</div>
-            <h2 class="success-title">Pembayaran Berhasil!</h2>
-            <p class="success-message">Terima kasih atas pesanan Anda</p>
-            <div class="success-details" id="successDetails"></div>
-            <button class="checkout-btn" id="backToHomeBtn" style="background: #666; margin-top: 10px;">Kembali ke Beranda</button>
-        </div>
+    <div class="cart-content success-content">
+        
+        <div class="success-icon" id="successIcon">✓</div>
+
+        <h2 class="success-title" id="successTitle">Pembayaran Berhasil!</h2>
+
+        <p class="success-message" id="successMessage">Terima kasih atas pesanan Anda</p>
+
+        <div class="success-details" id="successDetails"></div>
+
+        <button class="checkout-btn" id="backToHomeBtn" style="background: #666; margin-top: 10px;">
+            Kembali ke Beranda
+        </button>
+
     </div>
+</div>
+
 
     {{-- Toast Notification --}}
-    <div class="toast" id="toast">
+    {{-- <div class="toast" id="toast">
         <span>✓</span> <span id="toastMessage">Item ditambahkan ke keranjang</span>
-    </div>
+    </div> --}}
 
 @endsection
 
@@ -342,6 +351,8 @@ const defaultConfig = {
 }
 
     document.getElementById('paymentProof').addEventListener('change', function (e) {
+
+    document.getElementById('proofError').style.display = 'none';
     const file = e.target.files[0];
     if (!file) return;
 
@@ -382,6 +393,22 @@ const defaultConfig = {
     // Confirm Payment (on modal close)
     document.getElementById('paymentBtn').addEventListener('click', function () {
 
+    const method = document.querySelector('input[name="payment_method"]:checked')?.value;
+    const proofInput = document.getElementById('paymentProof');
+    const proofError = document.getElementById('proofError');
+
+    // VALIDASI khusus QRIS
+    if (method === 'qris' && (!proofInput.files || proofInput.files.length === 0)) {
+        proofError.style.display = 'block';  // tampilkan pesan
+        document.getElementById('qrisSection').scrollIntoView({
+            behavior: 'smooth',
+            block: 'center' // agar posisi pas di tengah layar
+        });
+        return; // stop submit
+    }
+
+    proofError.style.display = 'none';
+
     const tableId = {{ $table->id }};
     const paymentMethod = window.selectedPaymentMethod; // qris atau kasir
 
@@ -417,12 +444,13 @@ const defaultConfig = {
     })
     .then(res => res.json())
     .then(data => {
-        if (data.success) {
-            // Tampilkan popup pesan berhasil
-            document.getElementById('successModal').classList.add('active');
-            document.getElementById('successDetails').innerHTML =
-                "Pesanan Anda sedang diproses.";
+    if (data.success) {
 
+        // Kirim method ke success modal
+            const method = window.selectedPaymentMethod;
+        
+            showSuccessModal(method, data.order_id);
+        
             // Kosongkan cart
             cart = [];
             updateCart();
@@ -430,6 +458,8 @@ const defaultConfig = {
             alert("Terjadi kesalahan saat menyimpan pesanan.");
         }
     });
+
+
 });
 
 
@@ -499,6 +529,46 @@ const defaultConfig = {
 });
 
 
+function showSuccessModal(method, orderId) {
+    const modal = document.getElementById('successModal');
+    const details = document.getElementById('successDetails');
+
+    const icon   = document.getElementById('successIcon');
+    const title  = document.getElementById('successTitle');
+    const msg    = document.getElementById('successMessage');
+
+    modal.classList.add('active');
+
+    if (method === 'qris') {
+        icon.style.display = 'flex';
+        title.style.display = 'block';
+        msg.style.display = 'block';
+        details.innerHTML = `
+            <div>
+                <p><strong>Order ID:</strong> ${orderId}</p>
+                <p>Pesanan Anda sedang diproses.</p>
+            </div>
+        `;
+    } else {
+        icon.style.display = 'none';
+        title.style.display = 'none';
+        msg.style.display = 'none';
+        details.innerHTML = `
+            <div style="text-align:center;">
+                <h3 style="font-size: 22px; margin-bottom: 10px;">Silahkan Lanjutkan Pembayaran Di Kasir</h3>
+
+                <p style="font-size: 35px; font-weight: bold; margin: 20px 0;">
+                    {{ $table->name }}
+                </p>
+
+                <p style="margin-top: 10px;">
+                    <strong>Total Pembayaran:</strong> 
+                    Rp ${document.getElementById('paymentTotal').textContent.replace("Rp ","")}
+                </p>
+            </div>
+        `;
+    }
+}
 
 
     // Initialize the page

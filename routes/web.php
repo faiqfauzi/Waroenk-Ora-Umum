@@ -18,6 +18,14 @@ Route::post('payment/create/{id}', [PaymentController::class, 'checkout']);
 Route::get('/payment/success', [PaymentController::class, 'paymentSuccess']);
 // Confirm payment after the transaction
 
+Route::get('/admin/order-count-check', function () {
+    return response()->json([
+        'count' => \App\Models\Order::where('status', 'pending')->count(),
+    ]);
+});
+
+
+
 
 
 

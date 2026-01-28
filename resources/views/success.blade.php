@@ -1,26 +1,64 @@
 @extends('layouts.app')
 
-@section('title', 'Pembayaran Berhasil')
+@section('title', 'Status Pembayaran')
 
 @section('content')
-    <div class="success-container" style="text-align: center; padding: 50px 15px; background-color: #f4f4f4; border-radius: 8px; max-width: 600px; margin: auto;">
-        <div style="background-color: #4CAF50; padding: 20px; border-radius: 50%; display: inline-block; margin-bottom: 20px;">
-            <img src="https://img.icons8.com/ios/452/checked.png" alt="Success Icon" style="width: 70px; height: 70px;">
-        </div>
-        
-        <h1 style="font-size: 2.5rem; color: #4CAF50;">Pembayaran Berhasil!</h1>
-        <p style="font-size: 1.2rem; color: #333;">Terima kasih atas pesanan Anda. Kami telah menerima pembayaran Anda dengan sukses.</p>
+<div style="text-align:center; padding: 40px 20px; max-width: 600px; margin:auto;">
 
-        <div style="background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); margin-top: 30px;">
-            <p style="font-size: 1.1rem; color: #555; margin-bottom: 10px;"><strong>Order ID:</strong> <span style="color: #4CAF50;">{{ $orderId }}</span></p>
-            <p style="font-size: 1.1rem; color: #555; margin-bottom: 10px;"><strong>Total Pembayaran:</strong> Rp {{ number_format($totalAmount, 0, ',', '.') }}</p>
-            <p style="font-size: 1.1rem; color: #555; margin-bottom: 10px;"><strong>Metode Pembayaran:</strong> {{ $paymentMethod }}</p>
-            <p style="font-size: 1.1rem; color: #555; margin-bottom: 10px;"><strong>Meja ID:</strong> <span style="color: #4CAF50;">{{ $tableId }}</span></p>
+    {{-- ===== QRIS SUCCESS VIEW ===== --}}
+    @if ($order->method === 'qris')
+        <div style="background-color: #4CAF50; padding: 20px; border-radius: 50%; display:inline-flex; justify-content:center; align-items:center; margin-bottom: 20px;">
+            <span style="font-size: 50px; color:white;">✓</span>
         </div>
 
-        <div style="margin-top: 30px;">
-            <!-- Update the link to redirect to the table's menu page -->
-            <a href="{{ url('/table/' . $tableId) }}" class="btn btn-primary" style="background-color: #4CAF50; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px;">Kembali ke Halaman Menu</a>
+        <h1 style="font-size: 2rem; color: #4CAF50; margin-bottom: 10px;">Pembayaran Berhasil!</h1>
+        <p style="font-size: 1.1rem; color:#333;">Terima kasih, pembayaran Anda sudah kami terima.</p>
+
+        <div style="background:#fff; margin-top:25px; padding:20px; border-radius:12px; text-align:left;">
+            <p><strong>Order ID:</strong> {{ $order->id }}</p>
+            <p><strong>Metode:</strong> QRIS</p>
+            <p><strong>Total:</strong> Rp {{ number_format($order->total, 0, ',', '.') }}</p>
+            <p><strong>Meja:</strong> {{ $order->table->name ?? $order->table_id }}</p>
         </div>
-    </div>
+
+        <div style="margin-top:30px;">
+            <a href="{{ url('/table/' . $order->table_id) }}"
+               style="background:#4CAF50; padding:12px 30px; border-radius:8px; color:white; text-decoration:none;">
+               Kembali ke Menu
+            </a>
+        </div>
+    
+
+    {{-- ===== KASIR VIEW ===== --}}
+    @else
+        <h1 style="font-size: 1.8rem; color:#c62828; margin-bottom: 15px;">
+            Silahkan Lanjutkan Pembayaran di Kasir
+        </h1>
+
+        {{-- NOMOR MEJA --}}
+        <div style="font-size: 3.2rem; font-weight: 700; background:white; padding:20px; border-radius:12px; color:#c62828; margin-bottom:25px;">
+            {{ $order->table->name ?? $order->table_id }}
+        </div>
+
+        {{-- RINGKASAN TOTAL --}}
+        <div style="background:white; padding:20px; border-radius:12px; text-align:left;">
+            <p style="font-size:1.1rem;"><strong>Subtotal:</strong> Rp {{ number_format($order->subtotal, 0, ',', '.') }}</p>
+            <p style="font-size:1.1rem;"><strong>Pajak (10%):</strong> Rp {{ number_format($order->tax, 0, ',', '.') }}</p>
+
+            <hr style="margin:10px 0;">
+
+            <p style="font-size: 1.4rem; font-weight:700; color:#c62828;">
+                Total: Rp {{ number_format($order->total, 0, ',', '.') }}
+            </p>
+        </div>
+
+        <div style="margin-top:30px;">
+            <a href="{{ url('/table/' . $order->table_id) }}"
+               style="background:#c62828; padding:14px 32px; border-radius:8px; color:white; text-decoration:none; font-size:1.1rem;">
+               Kembali ke Menu
+            </a>
+        </div>
+    @endif
+
+</div>
 @endsection
