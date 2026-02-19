@@ -589,7 +589,7 @@
         }
 
         .payment-section {
-            padding: 20px 0;
+            padding: 20px 16px;
             border-bottom: 1px solid #f0f0f0;
         }
 
@@ -786,6 +786,56 @@
             animation: successPop 0.5s ease-out;
         }
 
+        .sub-jump-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .sub-jump-modal.active {
+            display: flex;
+        }
+
+        .sub-jump-content {
+            background: white;
+            width: 85%;
+            max-width: 320px;
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        .sub-jump-content h4 {
+            margin-bottom: 10px;
+        }
+
+        .sub-jump-btn {
+            position: fixed;
+            right: 20px;
+            bottom: 160px; /* lebih atas dari cart */
+            background: white;
+            border: 1px solid #ddd;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            cursor: pointer;
+            z-index: 9999;
+        }
+
+        .sub-section-title {
+            margin: 30px 0 15px;
+            font-weight: 600;
+            font-size: 18px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #eee;
+        }
+
+
+
+
         @keyframes successPop {
             0% {
                 transform: scale(0);
@@ -844,7 +894,7 @@
     display: flex;  /* Display categories horizontally */
     justify-content: flex-start; /* Align to the left */
     gap: 10px; /* Add spacing between items */
-    padding: 10px 0;
+    padding: 10px 16px;
     overflow-x: auto; /* Allow scrolling if the categories overflow horizontally */
 }
 

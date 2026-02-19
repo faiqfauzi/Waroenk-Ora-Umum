@@ -30,7 +30,6 @@
         @endforeach
     </div>
 
-    {{-- Menu Container --}}
     <div id="menuContainer">
         {{-- Menampilkan menu untuk setiap kategori --}}
     </div>
@@ -59,6 +58,15 @@
     @include('partials.cart')
     @include('partials.payment')
 
+    <div id="subJumpModal" class="sub-jump-modal">
+    <div class="sub-jump-content">
+        <h4>Pilih Sub Menu</h4>
+        <div id="subJumpList"></div>
+        <button id="closeSubJump">Tutup</button>
+    </div>
+</div>
+
+
     {{-- Success Modal --}}
     <div class="cart-modal" id="successModal">
     <div class="cart-content success-content">
@@ -67,16 +75,20 @@
 
         <h2 class="success-title" id="successTitle">Pembayaran Berhasil!</h2>
 
-        <p class="success-message" id="successMessage">Terima kasih atas pesanan Anda</p>
+        <p class="success-message" id="successMessage">
+            Terima kasih atas pesanan Anda
+        </p>
 
         <div class="success-details" id="successDetails"></div>
 
-        <button class="checkout-btn" id="backToHomeBtn" style="background: #666; margin-top: 10px;">
+        <button class="checkout-btn" id="backToHomeBtn"
+            style="background: #666; margin-top: 10px;">
             Kembali ke Beranda
         </button>
 
     </div>
 </div>
+
 
 
     {{-- Toast Notification --}}
@@ -88,19 +100,24 @@
 
 @push('scripts')
 <script>
+
     const categories = @json($categories);
 
     const menuItems = categories.reduce((acc, category) => {
-        acc[category.id] = category.menus.map(menu => ({
+    acc[category.id] = category.children.map(sub => ({
+        id: sub.id,
+        name: sub.name,
+        menus: sub.menus.map(menu => ({
             id: menu.id,
             name: menu.name || 'Unknown Item',
             price: menu.price || 0,
-            // icon: menu.icon || '🍽️',
             menu_image: menu.menu_image || 'default_image.jpg',
             description: menu.description || 'Deskripsi tidak tersedia'
-        }));
-        return acc;
-    }, {});
+        }))
+    }));
+    return acc;
+}, {});
+
 
     let cart = [];
     let activeCategory = categories[0].id;
@@ -136,17 +153,72 @@
 
     function renderMenu() {
     const container = document.getElementById('menuContainer');
-    container.innerHTML = ''; // Clear any existing content
+    container.innerHTML = '';
 
-    const currentItems = menuItems[activeCategory] || [];
+    const currentSubCategories = menuItems[activeCategory] || [];
+    if (currentSubCategories.length === 0) return;
 
-    currentItems.forEach(item => {
+    currentSubCategories.forEach(sub => {
+
+        const sectionTitle = document.createElement('div');
+        sectionTitle.id = `sub-${sub.id}`;
+        sectionTitle.className = "sub-section-title";
+        sectionTitle.style.marginTop = "30px";
+        sectionTitle.style.paddingLeft = "16px";
+        sectionTitle.textContent = sub.name;
+        container.appendChild(sectionTitle);
+
+        sub.menus.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'menu-card';
+
+            const iconHTML = item.menu_image
+                ? `<img src="/storage/${item.menu_image}" style="width:50px;height:50px;border-radius:50%;object-fit:cover;">`
+                : '';
+
+            card.innerHTML = `
+                <div class="menu-info">
+                    <div class="menu-icon">${iconHTML}</div>
+                    <div class="menu-text">
+                        <h5>${item.name}</h5>
+                        <p>Rp ${item.price.toLocaleString('id-ID')}</p>
+                    </div>
+                </div>
+                <button class="add-btn" data-id="${item.id}">+</button>
+            `;
+
+            container.appendChild(card);
+
+            card.addEventListener('click', function () {
+                showItemDetailsPopup(item);
+            });
+
+            card.querySelector('.add-btn').onclick = (e) => {
+                e.stopPropagation();
+                addToCart(item.id);
+            };
+        });
+    });
+}
+
+
+
+function renderSubCategory(subId) {
+    const container = document.getElementById('menuContainer');
+    container.innerHTML = '';
+
+    const currentSubCategories = menuItems[activeCategory] || [];
+    const selectedSub = currentSubCategories.find(s => s.id == subId);
+
+    if (!selectedSub) return;
+
+    selectedSub.menus.forEach(item => {
         const card = document.createElement('div');
         card.className = 'menu-card';
 
         const iconHTML = item.menu_image
-            ? `<img src="/storage/${item.menu_image}" alt="${item.name} Icon" style="width: 50px; height: 50px; object-fit: cover; border-radius: 50%;">`
-            : item.icon;
+            ? `<img src="/storage/${item.menu_image}" style="width:50px;height:50px;border-radius:50%;object-fit:cover;">`
+            : '';
 
         card.innerHTML = `
             <div class="menu-info">
@@ -156,27 +228,25 @@
                     <p>Rp ${item.price.toLocaleString('id-ID')}</p>
                 </div>
             </div>
-            <button class="add-btn" data-id="${item.id}" aria-label="Add ${item.name} to cart">+</button>
+            <button class="add-btn" data-id="${item.id}">+</button>
         `;
-        container.appendChild(card);
-document.querySelectorAll('.add-btn').forEach(btn => {
-        btn.onclick = (e) => {
-            e.stopPropagation(); // Agar tidak memicu detail modal
-            addToCart(parseInt(btn.dataset.id));
-        };
-    });
 
-        // One-click functionality: show item details when clicked
+        container.appendChild(card);
+
         card.addEventListener('click', function () {
             showItemDetailsPopup(item);
         });
+
+        card.querySelector('.add-btn').onclick = (e) => {
+            e.stopPropagation();
+            addToCart(item.id);
+        };
     });
 }
 
- 
 
 
-   function showItemDetailsPopup(item) {
+    function showItemDetailsPopup(item) {
     const detailsContainer = document.getElementById('menuItemDetailsPopup');
     const detailImage = document.getElementById('detailImage');
     const detailName = document.getElementById('detailName');
@@ -200,24 +270,28 @@ document.querySelectorAll('.add-btn').forEach(btn => {
 }
 
     function addToCart(itemId) {
-        let item = null;
-        for (let category in menuItems) {
-            item = menuItems[category].find(i => i.id === itemId);
+    let item = null;
+
+    for (let category in menuItems) {
+        for (let sub of menuItems[category]) {
+            item = sub.menus.find(i => i.id === itemId);
             if (item) break;
         }
-
-        if (!item) return;
-
-        const existingItem = cart.find(i => i.id === itemId);
-        if (existingItem) {
-            existingItem.quantity++;
-        } else {
-            cart.push({ ...item, quantity: 1 });
-        }
-
-        updateCart();
-        showToast(`${item.name} ditambahkan!`);
+        if (item) break;
     }
+
+    if (!item) return;
+
+    const existingItem = cart.find(i => i.id === itemId);
+    if (existingItem) {
+        existingItem.quantity++;
+    } else {
+        cart.push({ ...item, quantity: 1 });
+    }
+
+    updateCart();
+}
+
 
     function updateCart() {
         const badge = document.getElementById('cartBadge');

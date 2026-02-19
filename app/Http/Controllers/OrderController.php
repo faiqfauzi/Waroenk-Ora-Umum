@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\{Category, Menu, Table, Order, OrderItem};
+use App\Models\{Category, Table, Order, OrderItem};
 
 class OrderController extends Controller
 {
@@ -12,7 +12,10 @@ class OrderController extends Controller
         $table = Table::findOrFail($id);
 
        
-        $categories = Category::with('menus')->get();
+        $categories = Category::whereNull('parent_id')
+            ->with(['children.menus'])
+            ->get();
+
 
         return view('order.menu', compact('table', 'categories'));
     }

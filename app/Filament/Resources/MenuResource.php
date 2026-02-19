@@ -3,8 +3,6 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\MenuResource\Pages;
-use App\Filament\Resources\MenuResource\RelationManagers;
-use App\Models\Category;
 use App\Models\Menu;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -12,8 +10,6 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Actions\EditAction;
 use Illuminate\Support\Facades\Storage;
 use Filament\Tables\Actions\BulkActionGroup;
@@ -49,9 +45,16 @@ class MenuResource extends Resource
 
                 // Category dropdown
                 Forms\Components\Select::make('category_id')
-                    ->label('Category')
-                    ->options(Category::all()->pluck('name', 'id')) // Fetch all categories and use the name as label, id as value
+                    ->label('Sub Category')
+                    ->relationship(
+                        'category',
+                        'name',
+                        fn ($query) => $query->whereNotNull('parent_id')
+                    )
+                    ->searchable()
+                    ->preload()
                     ->required(),
+
 
                 // Menu Image
                 Forms\Components\FileUpload::make('menu_image')
@@ -70,7 +73,12 @@ class MenuResource extends Resource
                 TextColumn::make('name')->label('Menu Name'),
                 TextColumn::make('description')->label('Description'),
                 TextColumn::make('price')->label('Price'),
-                TextColumn::make('category.name')->label('Category'), // Display the category name
+                TextColumn::make('category.name')
+                ->label('Sub Category'),
+
+                TextColumn::make('category.parent.name')
+                ->label('Main Category')
+                ->default('-'),
                 TextColumn::make('menu_image') // Display the image URL or a thumbnail
                     ->url(fn($record) => Storage::url($record->menu_image)) // Generates the URL for the image
                     ->label('Image')

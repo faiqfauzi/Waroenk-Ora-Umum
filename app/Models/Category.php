@@ -9,10 +9,21 @@ class Category extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name'];
+    protected $fillable = ['name', 'parent_id'];
 
     public function menus()
     {
         return $this->hasMany(Menu::class);
     }
+
+    public function children()
+    {
+        return $this->hasMany(Category::class, 'parent_id');
+    }
+    
+    public function parent()
+    {
+        return $this->belongsTo(Category::class, 'parent_id');
+    }
+
 }
