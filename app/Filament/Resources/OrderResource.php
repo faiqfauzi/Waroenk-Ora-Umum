@@ -32,20 +32,6 @@ class OrderResource extends Resource
                     'dibatalkan' => 'Dibatalkan',
                 ])
                 ->required(),
-
-            Forms\Components\TextInput::make('notes')->label('Catatan')->disabled(),
-            Forms\Components\TextInput::make('method')->disabled(),
-            Forms\Components\TextInput::make('subtotal')->disabled(),
-            Forms\Components\TextInput::make('tax')->disabled(),
-            Forms\Components\TextInput::make('total')->disabled(),
-
-            Forms\Components\FileUpload::make('proof')
-                ->label('Bukti Pembayaran')
-                ->disk('public')
-                ->directory('proofs')
-                ->image()
-                ->imagePreviewHeight('300')
-                ->visible(fn ($record) => $record && $record->method === 'qris'),
         ]);
     }
 
@@ -141,7 +127,8 @@ class OrderResource extends Resource
                         'items' => $record->items,
                         'subtotal' => $record->subtotal,
                         'tax' => $record->tax,
-                        'total' => $record->total
+                        'total' => $record->total,
+                        'order'    => $record,
                     ]);
                 })
                 ->modalSubmitAction(false),

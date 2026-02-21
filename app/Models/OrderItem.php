@@ -13,12 +13,12 @@ class OrderItem extends Model
     'order_id',
     'name',
     'quantity',
-    'price'
-    // 'order_id',
-    // 'table_id',
-    // 'menu',
-    // 'quantity',
-    // 'price',
+    'price',
+    'options',
+    ];
+
+    protected $casts = [
+        'options' => 'array', // 🔥 ini tempat yang benar
     ];
 
     public function order()

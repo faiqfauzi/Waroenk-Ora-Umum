@@ -8,17 +8,19 @@ use App\Models\{Category, Table, Order, OrderItem};
 class OrderController extends Controller
 {
     public function showTable($id)
-    {
-        $table = Table::findOrFail($id);
+{
+    $table = Table::findOrFail($id);
 
-       
-        $categories = Category::whereNull('parent_id')
-            ->with(['children.menus'])
-            ->get();
+    $categories = Category::whereNull('parent_id')
+    ->with([
+        'children.menus.options.values'
+    ])
+    ->get();
 
 
-        return view('order.menu', compact('table', 'categories'));
-    }
+    return view('order.menu', compact('table', 'categories'));
+}
+
     
  public function checkout(Request $request, $tableId)
 {
@@ -36,12 +38,16 @@ class OrderController extends Controller
     foreach ($items as $item) {
       
         $orderItem = OrderItem::create([
-            'order_id' => $order->id,
-             'table_id' => $tableId,
-            'menu' => $item['name'],
-            'quantity' => $item['quantity'],
-            'price' => $item['price'],
-        ]);
+        'order_id' => $order->id,
+        'table_id' => $tableId,
+        'menu' => $item['name'],
+        'quantity' => $item['quantity'],
+        'price' => $item['price'],
+        'options' => isset($item['options']) 
+            ? json_encode($item['options']) 
+            : null,
+    ]);
+
 
      
 

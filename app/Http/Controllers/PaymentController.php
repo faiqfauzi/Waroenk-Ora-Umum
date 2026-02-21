@@ -45,13 +45,14 @@ class PaymentController extends Controller
         $items = json_decode($request->items, true);
 
         foreach ($items as $item) {
-            OrderItem::create([
-                'order_id' => $order->id,
-                'name'     => $item['name'],
-                'quantity' => $item['quantity'],
-                'price'    => $item['price']
-            ]);
-        }
+        OrderItem::create([
+            'order_id' => $order->id,
+            'name'     => $item['name'],
+            'quantity' => $item['quantity'],
+            'price'    => $item['price'],
+            'options'  => $item['options'] ?? [],
+        ]);
+    }
 
         // Respon ke frontend
         return response()->json([

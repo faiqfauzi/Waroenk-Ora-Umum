@@ -210,6 +210,78 @@
     transform: scale(0.95); /* Shrink the button slightly on click */
 }
 
+.center-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 100000;
+    align-items: center;
+    justify-content: center;
+}
+
+.center-modal.active {
+    display: flex;
+}
+
+.option-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 100001;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.option-modal.active {
+    display: flex;
+}
+
+.option-sheet {
+    background: white;
+    width: 100%;
+    max-height: 75vh;
+    border-radius: 24px 24px 0 0;
+    padding: 20px;
+    overflow-y: auto;
+    animation: slideUpOption 0.25s ease-out;
+}
+
+@keyframes slideUpOption {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+
+.option-confirm-btn {
+    width: 100%;
+    padding: 14px;
+    background: #c62828;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    margin-top: 15px;
+}
+
+.option-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.option-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.option-total {
+    margin: 15px 0;
+    font-size: 16px;
+}
+
 
         .cart-button {
             position: fixed;
@@ -269,7 +341,7 @@
         .cart-content {
             background: white;
             width: 100%;
-            max-height: 80%;
+            max-height: 80vh;
             border-radius: 24px 24px 0 0;
             overflow-y: auto;
             animation: slideUp 0.3s ease-out;
@@ -431,16 +503,14 @@
         .close-btn {
             background: none;
             border: none;
-            font-size: 28px;
+            font-size: 22px;
             cursor: pointer;
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 8px;
-            transition: background 0.2s;
+            color: #666;
         }
+
+        .close-btn:hover {
+    color: #c62828;
+}
 
         .cart-items {
             padding: 16px 24px;
@@ -549,6 +619,15 @@
 
         .checkout-btn:active {
             transform: translateY(0);
+        }
+
+        .menu-card.sold-out {
+            opacity: 0.5;
+        }
+
+        .disabled-btn {
+            background: #999 !important;
+            cursor: not-allowed;
         }
 
         .empty-cart {
@@ -922,7 +1001,8 @@
     <div class="app-wrapper">
         @yield('content')
     </div>
+
     @stack('scripts')
-     @yield('sripts')
 </body>
+
 </html>

@@ -11,9 +11,12 @@ use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Tables\Actions\EditAction;
-use Illuminate\Support\Facades\Storage;
 use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\DeleteBulkAction;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\ToggleColumn;
 
 class MenuResource extends Resource
 {
@@ -63,7 +66,41 @@ class MenuResource extends Resource
                     ->image() // Ensure only images are uploaded
                     ->maxSize(1024) // Limit the image size to 1MB
                     ->columnSpan(2), // Optional: spans across 2 columns
-            ]);
+
+                Forms\Components\Toggle::make('is_available')
+                    ->label('Tersedia')
+                    ->default(true),
+
+                Repeater::make('options')
+                    ->relationship()
+                    ->schema([
+                        Forms\Components\TextInput::make('name')
+                            ->label('Nama Opsi')
+                            ->required(),
+                
+                        Select::make('type')
+                            ->options([
+                                'single' => 'Single Choice',
+                                'multiple' => 'Multiple Choice',
+                            ])
+                            ->required(),
+                
+                        Repeater::make('values')
+                            ->relationship()
+                            ->schema([
+                                Forms\Components\TextInput::make('label')
+                                    ->required(),
+                
+                                Forms\Components\TextInput::make('additional_price')
+                                    ->numeric()
+                                    ->default(0)
+                                    ->required(),
+                            ])
+                            ->columns(2),
+                    ])
+                    ->columnSpanFull(),
+                
+                            ]);
     }
 
     public static function table(Table $table): Table
@@ -79,9 +116,8 @@ class MenuResource extends Resource
                 TextColumn::make('category.parent.name')
                 ->label('Main Category')
                 ->default('-'),
-                TextColumn::make('menu_image') // Display the image URL or a thumbnail
-                    ->url(fn($record) => Storage::url($record->menu_image)) // Generates the URL for the image
-                    ->label('Image')
+                ToggleColumn::make('is_available')
+                 ->label('Tersedia'),
             ])
             ->filters([
                 // Add filters if necessary
@@ -94,13 +130,6 @@ class MenuResource extends Resource
                     DeleteBulkAction::make(),
                 ]),
             ]);
-    }
-
-    public static function getRelations(): array
-    {
-        return [
-            //
-        ];
     }
 
     public static function getPages(): array

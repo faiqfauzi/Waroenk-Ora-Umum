@@ -41,22 +41,34 @@
     <div class="menu-item-detail-popup">
         <img id="detailImage" src="" alt="Item Image">
         <h2 id="detailName"></h2>
-        <p id="detailPrice"></p></p>
+        <p id="detailPrice"></p>
         <p id="detailDescription"></p>
         <button id="backButtonPopup">Kembali</button>
     </div>
 </div>
 
-    
+    <!-- Menu Option Modal -->
+<div id="optionModal" class="option-modal">
+    <div class="option-sheet">
 
-    {{-- Cart Button --}}
-    <button class="cart-button" id="cartButton" aria-label="Open shopping cart" style="background: #c62828;">
-        🛒
-        <span class="cart-badge" id="cartBadge" style="display: none;">0</span>
-    </button>
+        <div class="option-header">
+            <h3 id="optionMenuTitle"></h3>
+            <button id="closeOptionModal">&times;</button>
+        </div>
 
-    @include('partials.cart')
-    @include('partials.payment')
+        <div id="optionContainer"></div>
+
+        <div class="option-total">
+            <strong>Total:</strong>
+            <span id="optionTotalPrice"></span>
+        </div>
+
+        <button id="confirmOptionBtn" class="option-confirm-btn">
+            Tambah ke Keranjang
+        </button>
+
+    </div>
+</div>
 
     <div id="subJumpModal" class="sub-jump-modal">
     <div class="sub-jump-content">
@@ -65,6 +77,15 @@
         <button id="closeSubJump">Tutup</button>
     </div>
 </div>
+
+{{-- Cart Button --}}
+    <button class="cart-button" id="cartButton" aria-label="Open shopping cart" style="background: #c62828;">
+        🛒
+        <span class="cart-badge" id="cartBadge" style="display: none;">0</span>
+    </button>
+
+    @include('partials.cart')
+    @include('partials.payment')
 
 
     {{-- Success Modal --}}
@@ -101,26 +122,79 @@
 @push('scripts')
 <script>
 
+    document.addEventListener('DOMContentLoaded', function() {
+
+    document.getElementById('closeOptionModal')
+        .addEventListener('click', function() {
+            document.getElementById('optionModal').classList.remove('active');
+        });
+
+    document.getElementById('optionModal')
+    .addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.remove('active');
+        }
+    });
+
+    document.getElementById('confirmOptionBtn')
+        .addEventListener('click', function() {
+
+            const checkedInputs = document.querySelectorAll('#optionContainer input:checked');
+            const selected = [];
+            let extra = 0;
+
+            checkedInputs.forEach(input => {
+                selected.push({
+                    label: input.dataset.label,
+                    price: parseInt(input.dataset.price)
+                });
+
+                extra += parseInt(input.dataset.price);
+            });
+
+            const finalPrice = selectedItemForOption.price + extra;
+
+            addToCartWithOptions(selectedItemForOption, selected, finalPrice);
+
+            document.getElementById('optionModal').classList.remove('active');
+        });
+
+});
+
+
+
+
     const categories = @json($categories);
+
 
     const menuItems = categories.reduce((acc, category) => {
     acc[category.id] = category.children.map(sub => ({
         id: sub.id,
         name: sub.name,
         menus: sub.menus.map(menu => ({
-            id: menu.id,
-            name: menu.name || 'Unknown Item',
-            price: menu.price || 0,
-            menu_image: menu.menu_image || 'default_image.jpg',
-            description: menu.description || 'Deskripsi tidak tersedia'
-        }))
+        id: menu.id,
+        name: menu.name || 'Unknown Item',
+        price: menu.price || 0,
+        menu_image: menu.menu_image || 'default_image.jpg',
+        description: menu.description || 'Deskripsi tidak tersedia',
+        options: (menu.options || []).map(opt => ({
+            id: opt.id,
+            name: opt.name,
+            type: opt.type,
+            values: opt.values || []
+        })),
+        is_available: menu.is_available,
+    }))
+
+
     }));
     return acc;
 }, {});
 
 
     let cart = [];
-    let activeCategory = categories[0].id;
+    let activeCategory = categories.find(c => c.children.length > 0)?.id;
+
 
     function renderCategories() {
         const pillsContainer = document.getElementById('categoryPills');
@@ -169,6 +243,7 @@
         container.appendChild(sectionTitle);
 
         sub.menus.forEach(item => {
+            const isAvailable = item.is_available;
             const card = document.createElement('div');
             card.className = 'menu-card';
 
@@ -184,24 +259,114 @@
                         <p>Rp ${item.price.toLocaleString('id-ID')}</p>
                     </div>
                 </div>
-                <button class="add-btn" data-id="${item.id}">+</button>
+                ${
+                isAvailable
+                ? `<button class="add-btn" data-id="${item.id}">+</button>`
+                : `<button class="add-btn" disabled style="background:#999;cursor:not-allowed;">Habis</button>`
+            }
             `;
 
             container.appendChild(card);
+            if (!item.is_available) {
+                card.style.opacity = "0.5";
+            }
 
-            card.addEventListener('click', function () {
-                showItemDetailsPopup(item);
+            card.addEventListener('click', function (e) {
+    if (e.target.closest('.add-btn')) return;
+    showItemDetailsPopup(item);
+});
+
+
+            const addBtn = card.querySelector('.add-btn');
+
+            addBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                openOptionModal(item);
             });
 
-            card.querySelector('.add-btn').onclick = (e) => {
-                e.stopPropagation();
-                addToCart(item.id);
-            };
+
         });
     });
 }
 
+let selectedItemForOption = null;
+let selectedOptions = [];
 
+function openOptionModal(item) {
+    if (!item.is_available) return;
+document.getElementById('menuItemDetailsPopup').style.display = 'none';
+
+
+    selectedItemForOption = item;
+    selectedOptions = [];
+
+    document.getElementById('optionMenuTitle').textContent = item.name;
+
+    const container = document.getElementById('optionContainer');
+    container.innerHTML = '';
+
+    if (!item.options || item.options.length === 0) {
+        addToCartWithOptions(item, [], item.price);
+        return;
+    }
+
+    item.options.forEach(opt => {
+
+        const section = document.createElement('div');
+        section.innerHTML = `<p><strong>${opt.name}</strong></p>`;
+
+        opt.values.forEach(val => {
+
+            const inputType = opt.type === "single" ? "radio" : "checkbox";
+
+            const optionHTML = `
+                <label>
+                    <input type="${inputType}"
+                           name="option_${opt.id}"
+                           data-price="${val.additional_price}"
+                           data-label="${val.label}">
+                    ${val.label}
+                    ${val.additional_price > 0 ? 
+                      `( +Rp ${val.additional_price.toLocaleString('id-ID')} )` 
+                      : ''}
+                </label><br>
+            `;
+
+            section.innerHTML += optionHTML;
+        });
+
+        container.appendChild(section);
+    });
+
+    document.getElementById('optionModal').classList.add('active');
+    updateOptionPrice();
+}
+
+
+function updateOptionPrice() {
+    if (!selectedItemForOption) return;
+
+    const basePrice = selectedItemForOption.price;
+    let extra = 0;
+
+    const inputs = document.querySelectorAll('#optionContainer input:checked');
+
+    inputs.forEach(input => {
+        extra += parseInt(input.dataset.price || 0);
+    });
+
+    const final = basePrice + extra;
+
+    document.getElementById('optionTotalPrice')
+        .textContent = `Rp ${final.toLocaleString('id-ID')}`;
+}
+
+
+document.addEventListener('change', function(e) {
+    if (e.target.closest('#optionContainer')) {
+        updateOptionPrice();
+    }
+});
 
 function renderSubCategory(subId) {
     const container = document.getElementById('menuContainer');
@@ -237,10 +402,16 @@ function renderSubCategory(subId) {
             showItemDetailsPopup(item);
         });
 
-        card.querySelector('.add-btn').onclick = (e) => {
-            e.stopPropagation();
-            addToCart(item.id);
-        };
+        const addBtn = card.querySelector('.add-btn');
+
+addBtn.addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    e.stopPropagation();
+
+    openOptionModal(item);
+});
+
     });
 }
 
@@ -269,24 +440,30 @@ function renderSubCategory(subId) {
     });
 }
 
-    function addToCart(itemId) {
-    let item = null;
+    function addToCartWithOptions(item, options, finalPrice) {
 
-    for (let category in menuItems) {
-        for (let sub of menuItems[category]) {
-            item = sub.menus.find(i => i.id === itemId);
-            if (item) break;
-        }
-        if (item) break;
-    }
+    const optionKey = options
+    .map(o => `${o.label}-${o.price}`)
+    .sort()
+    .join('|');
 
-    if (!item) return;
+const cartKey = `${item.id}__${optionKey}`;
 
-    const existingItem = cart.find(i => i.id === itemId);
+
+    const existingItem = cart.find(i => i.cartKey === cartKey);
+
     if (existingItem) {
         existingItem.quantity++;
     } else {
-        cart.push({ ...item, quantity: 1 });
+        cart.push({
+            cartKey: cartKey,
+            id: item.id,
+            name: item.name,
+            price: finalPrice,
+            base_price: item.price,
+            options: options,
+            quantity: 1
+        });
     }
 
     updateCart();
@@ -331,24 +508,22 @@ function renderSubCategory(subId) {
         cartItem.innerHTML = `
             <div class="cart-item-info">
                 <h6> ${item.name}</h6>
+                ${item.options ? item.options.map(o => 
+                    `<small>+ ${o.label}</small>`
+                ).join('<br>') : ''}
+
                 <p>Rp ${item.price.toLocaleString('id-ID')}</p>
             </div>
             <div class="cart-item-controls">
-                <button class="qty-btn" data-id="${item.id}" data-action="decrease">−</button>
+                <button class="qty-btn" data-key="${item.cartKey}" data-action="decrease">−</button>
                 <span class="qty-display">${item.quantity}</span>
-                <button class="qty-btn" data-id="${item.id}" data-action="increase">+</button>
+                <button class="qty-btn" data-key="${item.cartKey}" data-action="increase">+</button>
             </div>
         `;
         cartItemsContainer.appendChild(cartItem);
     });
 
-    document.querySelectorAll('.qty-btn').forEach(btn => {
-        btn.addEventListener('click', function () {
-            const itemId = parseInt(this.dataset.id);
-            const action = this.dataset.action;
-            updateQuantity(itemId, action);
-        });
-    });
+
 
     // PERHITUNGAN BARU
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -362,20 +537,23 @@ function renderSubCategory(subId) {
 }
 
 
-    function updateQuantity(itemId, action) {
-        const item = cart.find(i => i.id === itemId);
+    function updateQuantity(cartKey, action) {
+    const item = cart.find(i => i.cartKey === cartKey);
 
-        if (action === 'increase') {
-            item.quantity++;
-        } else if (action === 'decrease') {
-            item.quantity--;
-            if (item.quantity === 0) {
-                cart = cart.filter(i => i.id !== itemId);
-            }
+    if (!item) return;
+
+    if (action === 'increase') {
+        item.quantity++;
+    } else if (action === 'decrease') {
+        item.quantity--;
+        if (item.quantity === 0) {
+            cart = cart.filter(i => i.cartKey !== cartKey);
         }
-
-        updateCart();
     }
+
+    updateCart();
+}
+
 
     function showToast(message) {
         const toast = document.getElementById('toast');
@@ -533,7 +711,6 @@ const defaultConfig = {
         }
     });
 
-
 });
 
 
@@ -643,6 +820,17 @@ function showSuccessModal(method, orderId) {
         `;
     }
 }
+
+document.addEventListener('click', function (e) {
+    const btn = e.target.closest('.qty-btn');
+    if (!btn) return;
+
+    const cartKey = btn.dataset.key;
+    const action = btn.dataset.action;
+
+    updateQuantity(cartKey, action);
+});
+
 
 
     // Initialize the page
