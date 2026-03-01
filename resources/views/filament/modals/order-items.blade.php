@@ -5,33 +5,39 @@
 
     <div style="line-height: 1.6;">
         @foreach ($items as $item)
-            <div style="margin-bottom: 12px;">
 
-                <div>
-                    • {{ $item->name }}
-                    <strong>x{{ $item->quantity }}</strong>
-                </div>
+<div class="flex justify-between items-start mb-3">
 
-                {{-- 🔥 TAMPILKAN OPTIONS --}}
-                @if (!empty($item->options))
-                    <div style="margin-left: 18px; font-size: 13px; color: #555;">
-                        @foreach ($item->options as $option)
-                            <div>
-                                + {{ $option['label'] }}
-                                @if(($option['price'] ?? 0) > 0)
-                                    ( +Rp {{ number_format($option['price'], 0, ',', '.') }} )
-                                @endif
-                            </div>
-                        @endforeach
+    {{-- LEFT --}}
+    <div class="max-w-[75%]">
+
+        <div class="font-medium">
+            {{ $item['name'] }} x{{ $item['quantity'] }}
+        </div>
+
+        @if (!empty($item['options']))
+            <div class="text-sm text-gray-400 ml-2 mt-1">
+                @foreach ($item['options'] as $opt)
+                    <div>
+                        + {{ $opt['label'] }}
+                        @if($opt['price'] > 0)
+                            (+ Rp {{ number_format($opt['price'],0,',','.') }})
+                        @endif
                     </div>
-                @endif
-
-                <div style="margin-top: 4px;">
-                    Rp {{ number_format($item->price * $item->quantity, 0, ',', '.') }}
-                </div>
-
+                @endforeach
             </div>
-        @endforeach
+        @endif
+
+    </div>
+
+    {{-- RIGHT PRICE --}}
+    <div class="font-semibold whitespace-nowrap">
+        Rp {{ number_format($item['price'],0,',','.') }}
+    </div>
+
+</div>
+
+@endforeach
 
         @if(!empty($order->notes))
             <div style="margin-top: 15px;">

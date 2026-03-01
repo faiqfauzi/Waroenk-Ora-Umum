@@ -70,19 +70,24 @@
     </div>
 </div>
 
-    <div id="subJumpModal" class="sub-jump-modal">
-    <div class="sub-jump-content">
-        <h4>Pilih Sub Menu</h4>
-        <div id="subJumpList"></div>
-        <button id="closeSubJump">Tutup</button>
-    </div>
+<button id="subNavBtn" class="subnav-float">
+    📑
+</button>
+<div id="subNavPanel" class="subnav-panel">
+    <div id="subNavList"></div>
 </div>
 
-{{-- Cart Button --}}
-    <button class="cart-button" id="cartButton" aria-label="Open shopping cart" style="background: #c62828;">
-        🛒
-        <span class="cart-badge" id="cartBadge" style="display: none;">0</span>
-    </button>
+<div id="bottomCartBar" class="bottom-cart-bar">
+    <div class="cart-bar-content">
+        <span id="bottomCartText">
+            🛒 0 Item
+        </span>
+
+        <strong id="bottomCartTotal">
+            Rp 0
+        </strong>
+    </div>
+</div>
 
     @include('partials.cart')
     @include('partials.payment')
@@ -109,19 +114,10 @@
 
     </div>
 </div>
-
-
-
-    {{-- Toast Notification --}}
-    {{-- <div class="toast" id="toast">
-        <span>✓</span> <span id="toastMessage">Item ditambahkan ke keranjang</span>
-    </div> --}}
-
 @endsection
 
 @push('scripts')
 <script>
-
     document.addEventListener('DOMContentLoaded', function() {
 
     document.getElementById('closeOptionModal')
@@ -138,6 +134,10 @@
 
     document.getElementById('confirmOptionBtn')
     .addEventListener('click', function() {
+        if (!validateRequiredOptions()) {
+            alert("Silakan pilih opsi terlebih dahulu.");
+            return;
+        }
 
         const checkedInputs = document.querySelectorAll('#optionContainer input:checked');
         const selected = [];
@@ -159,6 +159,16 @@
 
         document.getElementById('optionModal').classList.remove('active');
     });
+
+    const cartBar = document.getElementById('bottomCartBar');
+
+    if (cartBar) {
+        cartBar.addEventListener('click', () => {
+            document
+                .getElementById('cartModal')
+                ?.classList.add('active');
+        });
+    }
 
 });
 
@@ -220,6 +230,9 @@
                 activeCategory = category.id;
                 renderCategories();
                 renderMenu();
+                buildSubNavigator();
+
+                document.getElementById('subNavPanel').style.display = 'none';
             });
 
             pillsContainer.appendChild(pill);
@@ -288,6 +301,8 @@
 
         });
     });
+    
+                buildSubNavigator();
 }
 
 let selectedItemForOption = null;
@@ -314,7 +329,13 @@ document.getElementById('menuItemDetailsPopup').style.display = 'none';
     item.options.forEach(opt => {
 
         const section = document.createElement('div');
-        section.innerHTML = `<p><strong>${opt.name}</strong></p>`;
+        section.innerHTML = `
+            <div class="option-group-title"
+                 data-group-id="${opt.id}"
+                 data-type="${opt.type}">
+                ${opt.name}
+            </div>
+            `;
 
         opt.values.forEach(val => {
 
@@ -323,20 +344,43 @@ document.getElementById('menuItemDetailsPopup').style.display = 'none';
             const isDisabled = !val.is_available;
 
             const optionHTML = `
-                <label style="${isDisabled ? 'opacity:0.5; cursor:not-allowed;' : ''}">
-                    <input type="${inputType}"
-                           name="option_${opt.id}"
-                           data-id="${val.id}"
-                           data-price="${val.additional_price}"
-                           data-label="${val.label}"
-                           ${isDisabled ? 'disabled' : ''}>
-                    ${val.label}
-                    ${val.additional_price > 0 ? 
-                      `( +Rp ${val.additional_price.toLocaleString('id-ID')} )` 
-                      : ''}
-                    ${isDisabled ? ' (Habis)' : ''}
-                </label><br>
-            `;
+<label class="option-card ${isDisabled ? 'disabled' : ''}">
+    
+    <input 
+        type="${inputType}"
+        name="option_${opt.id}"
+        data-id="${val.id}"
+        data-price="${val.additional_price}"
+        data-label="${val.label}"
+        ${isDisabled ? 'disabled' : ''}
+    >
+
+    <div class="option-content">
+        <div class="option-left">
+            <div class="option-name">
+                ${val.label}
+            </div>
+
+            ${
+                val.additional_price > 0
+                ? `<div class="option-price">
+                        + Rp ${val.additional_price.toLocaleString('id-ID')}
+                   </div>`
+                : `<div class="option-price">Gratis</div>`
+            }
+
+            ${
+                isDisabled
+                ? `<div class="option-stock">(Habis)</div>`
+                : ''
+            }
+        </div>
+
+        <div class="option-check"></div>
+    </div>
+
+</label>
+`;
 
             section.innerHTML += optionHTML;
         });
@@ -346,8 +390,44 @@ document.getElementById('menuItemDetailsPopup').style.display = 'none';
 
     document.getElementById('optionModal').classList.add('active');
     updateOptionPrice();
+    toggleConfirmButton();
 }
 
+function validateRequiredOptions() {
+
+    const groups = document.querySelectorAll('.option-group-title');
+
+    for (const group of groups) {
+
+        const type = group.dataset.type;
+        const groupId = group.dataset.groupId;
+
+        // hanya SINGLE yg wajib
+        if (type !== 'single') continue;
+
+        const checked = document.querySelector(
+            `input[name="option_${groupId}"]:checked`
+        );
+
+        if (!checked) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+function toggleConfirmButton() {
+    const btn = document.getElementById('confirmOptionBtn');
+
+    if (validateRequiredOptions()) {
+        btn.disabled = false;
+        btn.style.opacity = "1";
+    } else {
+        btn.disabled = true;
+        btn.style.opacity = "0.5";
+    }
+}
 
 function updateOptionPrice() {
     if (!selectedItemForOption) return;
@@ -371,7 +451,59 @@ function updateOptionPrice() {
 document.addEventListener('change', function(e) {
     if (e.target.closest('#optionContainer')) {
         updateOptionPrice();
+        toggleConfirmButton();
     }
+});
+
+function buildSubNavigator() {
+
+    const currentSubs = menuItems[activeCategory] || [];
+
+    const btn = document.getElementById('subNavBtn');
+    const list = document.getElementById('subNavList');
+
+    // AUTO HIDE kalau sedikit
+    if (currentSubs.length <= 1) {
+        btn.style.display = 'none';
+        return;
+    }
+
+    btn.style.display = 'block';
+
+    list.innerHTML = '';
+
+    currentSubs.forEach(sub => {
+
+        const item = document.createElement('div');
+        item.className = 'subnav-item';
+        item.textContent = sub.name;
+
+        item.onclick = () => {
+            document
+                .getElementById(`sub-${sub.id}`)
+                ?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+
+            document.getElementById('subNavPanel')
+                .style.display = 'none';
+        };
+
+        list.appendChild(item);
+    });
+}
+
+document
+.getElementById('subNavBtn')
+.addEventListener('click', () => {
+
+    const panel = document.getElementById('subNavPanel');
+
+    panel.style.display =
+        panel.style.display === 'block'
+            ? 'none'
+            : 'block';
 });
 
 function renderSubCategory(subId) {
@@ -477,18 +609,37 @@ const cartKey = `${item.id}__${optionKey}`;
 
 
     function updateCart() {
-        const badge = document.getElementById('cartBadge');
-        const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-        if (totalItems > 0) {
-            badge.style.display = 'flex';
-            badge.textContent = totalItems;
-        } else {
-            badge.style.display = 'none';
-        }
+    const totalItems =
+        cart.reduce((sum, item) => sum + item.quantity, 0);
 
-        renderCart();
+    const subtotal =
+        cart.reduce((sum, item) =>
+            sum + (item.price * item.quantity), 0);
+
+    const tax = Math.floor(subtotal * 0.10);
+    const total = subtotal + tax;
+
+    const bar = document.getElementById('bottomCartBar');
+
+    // ✅ SHOW / HIDE
+    if (totalItems > 0) {
+
+        bar.classList.add('show');
+
+        document.getElementById('bottomCartText')
+            .textContent = `🛒 ${totalItems} Item`;
+
+        document.getElementById('bottomCartTotal')
+            .textContent =
+            `Rp ${total.toLocaleString('id-ID')}`;
+
+    } else {
+        bar.classList.remove('show');
     }
+
+    renderCart();
+}
 
     function renderCart() {
     const cartItemsContainer = document.getElementById('cartItems');
@@ -621,12 +772,6 @@ const defaultConfig = {
     previewImg.style.display = "block";
     });
 
-
-    // Open Cart Modal
-    document.getElementById('cartButton').addEventListener('click', function () {
-        document.getElementById('cartModal').classList.add('active');
-    });
-
     // Close Cart Modal
     document.getElementById('closeCart').addEventListener('click', function () {
         document.getElementById('cartModal').classList.remove('active');
@@ -637,9 +782,15 @@ const defaultConfig = {
     });
 
     // Show Payment Modal on Checkout
-    document.getElementById('checkoutBtn').addEventListener('click', function () {
-        const selectedMethod = document.querySelector('input[name="payment_method"]:checked').value;
-        window.selectedPaymentMethod = selectedMethod;
+    // document.getElementById('checkoutBtn').addEventListener('click', function () {
+    //     const selectedMethod = document.querySelector('input[name="payment_method"]:checked').value;
+    //     window.selectedPaymentMethod = selectedMethod;
+
+    document.getElementById('checkoutBtn')
+        .addEventListener('click', function () {
+        
+            const selectedMethod = 'kasir';
+            window.selectedPaymentMethod = selectedMethod;
 
         document.getElementById('cartModal').classList.remove('active');
         document.getElementById('paymentModal').classList.add('active');
@@ -844,6 +995,7 @@ document.addEventListener('click', function (e) {
     // Initialize the page
     renderCategories();
     renderMenu();
+    buildSubNavigator();
     updateCart();
 </script>
 @endpush

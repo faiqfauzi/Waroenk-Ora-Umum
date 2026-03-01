@@ -39,10 +39,19 @@
                     <span>QRIS</span>
                 </label> --}}
             
-                <label class="payment-option">
+                {{-- <label class="payment-option">
                     <input type="radio" name="payment_method" value="kasir">
                     <span>Kasir</span>
-                </label>
+                </label> --}}
+                <div class="payment-info">
+
+                    <div>
+                        <strong>Bayar di Kasir</strong>
+                        <p>
+                            Pembayaran dilakukan langsung di kasir setelah pesanan dibuat.
+                        </p>
+                    </div>
+                </div>
             </div>
         
             <button class="checkout-btn" id="checkoutBtn" style="background: #c62828;">
