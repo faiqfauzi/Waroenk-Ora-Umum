@@ -7,22 +7,35 @@ async function checkOrders() {
 
         const currentCount = data.count;
 
-        // PLAY SOUND jika ada order masuk (count naik)
         if (lastOrderCount !== null && currentCount > lastOrderCount) {
+
+            // 🔊 Sound
             const audio = new Audio("/storage/sounds/new_order.mp3");
             audio.volume = 0.7;
             audio.play();
-        }
 
-        // REFRESH BADGE jika count berubah (naik atau turun)
-        if (lastOrderCount !== null && currentCount !== lastOrderCount) {
+            // 🔢 Update badge manual
+            const badge = document.querySelector('.fi-sidebar .fi-badge');
+            if (badge) {
+                badge.textContent = currentCount;
+            }
 
-            // cara aman untuk Filament 3
-            window.dispatchEvent(new CustomEvent('filament-refresh-navigation', {
-                bubbles: true
-            }));
+            Swal.close(); 
 
-            console.log("Navigation refreshed");
+            // 💬 Popup Toast
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: 'Order Baru!',
+                text: 'Ada pesanan masuk 🎉',
+                showConfirmButton: false,
+                showCloseButton: true,
+                background: '#ffffff',
+                customClass: {
+                    popup: 'rounded-xl shadow-xl'
+                }
+            });
         }
 
         lastOrderCount = currentCount;
@@ -32,4 +45,4 @@ async function checkOrders() {
     }
 }
 
-setInterval(checkOrders, 3000); // 3 detik
+setInterval(checkOrders, 3000);

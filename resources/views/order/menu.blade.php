@@ -137,27 +137,28 @@
     });
 
     document.getElementById('confirmOptionBtn')
-        .addEventListener('click', function() {
+    .addEventListener('click', function() {
 
-            const checkedInputs = document.querySelectorAll('#optionContainer input:checked');
-            const selected = [];
-            let extra = 0;
+        const checkedInputs = document.querySelectorAll('#optionContainer input:checked');
+        const selected = [];
+        let extra = 0;
 
-            checkedInputs.forEach(input => {
-                selected.push({
-                    label: input.dataset.label,
-                    price: parseInt(input.dataset.price)
-                });
-
-                extra += parseInt(input.dataset.price);
+        checkedInputs.forEach(input => {
+            selected.push({
+                id: parseInt(input.dataset.id),
+                label: input.dataset.label,
+                price: parseInt(input.dataset.price)
             });
 
-            const finalPrice = selectedItemForOption.price + extra;
-
-            addToCartWithOptions(selectedItemForOption, selected, finalPrice);
-
-            document.getElementById('optionModal').classList.remove('active');
+            extra += parseInt(input.dataset.price || 0);
         });
+
+        const finalPrice = selectedItemForOption.price + extra;
+
+        addToCartWithOptions(selectedItemForOption, selected, finalPrice);
+
+        document.getElementById('optionModal').classList.remove('active');
+    });
 
 });
 
@@ -177,12 +178,12 @@
         price: menu.price || 0,
         menu_image: menu.menu_image || 'default_image.jpg',
         description: menu.description || 'Deskripsi tidak tersedia',
-        options: (menu.options || []).map(opt => ({
-            id: opt.id,
-            name: opt.name,
-            type: opt.type,
-            values: opt.values || []
-        })),
+        options: (menu.option_groups || []).map(group => ({
+            id: group.id,
+            name: group.name,
+            type: group.type,
+            values: group.values || []
+        })), //noted koma
         is_available: menu.is_available,
     }))
 
@@ -319,16 +320,21 @@ document.getElementById('menuItemDetailsPopup').style.display = 'none';
 
             const inputType = opt.type === "single" ? "radio" : "checkbox";
 
+            const isDisabled = !val.is_available;
+
             const optionHTML = `
-                <label>
+                <label style="${isDisabled ? 'opacity:0.5; cursor:not-allowed;' : ''}">
                     <input type="${inputType}"
                            name="option_${opt.id}"
+                           data-id="${val.id}"
                            data-price="${val.additional_price}"
-                           data-label="${val.label}">
+                           data-label="${val.label}"
+                           ${isDisabled ? 'disabled' : ''}>
                     ${val.label}
                     ${val.additional_price > 0 ? 
                       `( +Rp ${val.additional_price.toLocaleString('id-ID')} )` 
                       : ''}
+                    ${isDisabled ? ' (Habis)' : ''}
                 </label><br>
             `;
 
@@ -686,6 +692,8 @@ const defaultConfig = {
         const proofFile = document.getElementById('paymentProof').files[0];
         formData.append('proof', proofFile);
     }
+
+    console.log(cart);
 
     fetch(`/payment/manual/${tableId}`, {
         method: 'POST',

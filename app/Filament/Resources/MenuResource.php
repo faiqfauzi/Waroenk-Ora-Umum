@@ -22,6 +22,8 @@ class MenuResource extends Resource
 {
     protected static ?string $model = Menu::class;
 
+    protected static ?int $navigationSort = 5;
+
     protected static ?string $navigationIcon = 'heroicon-o-bars-3';
 
     public static function form(Form $form): Form
@@ -71,34 +73,11 @@ class MenuResource extends Resource
                     ->label('Tersedia')
                     ->default(true),
 
-                Repeater::make('options')
-                    ->relationship()
-                    ->schema([
-                        Forms\Components\TextInput::make('name')
-                            ->label('Nama Opsi')
-                            ->required(),
-                
-                        Select::make('type')
-                            ->options([
-                                'single' => 'Single Choice',
-                                'multiple' => 'Multiple Choice',
-                            ])
-                            ->required(),
-                
-                        Repeater::make('values')
-                            ->relationship()
-                            ->schema([
-                                Forms\Components\TextInput::make('label')
-                                    ->required(),
-                
-                                Forms\Components\TextInput::make('additional_price')
-                                    ->numeric()
-                                    ->default(0)
-                                    ->required(),
-                            ])
-                            ->columns(2),
-                    ])
-                    ->columnSpanFull(),
+                Forms\Components\CheckboxList::make('optionGroups')
+                    ->label('Option Groups')
+                    ->relationship('optionGroups', 'name')
+                    ->columns(2)
+                    ->searchable()
                 
                             ]);
     }

@@ -11,23 +11,28 @@ return new class extends Migration
      */
     public function up(): void
 {
-    Schema::create('menu_option_values', function (Blueprint $table) {
+    Schema::create('menu_option_group', function (Blueprint $table) {
         $table->id();
-        $table->foreignId('menu_option_id')
+
+        $table->foreignId('menu_id')
               ->constrained()
-              ->onDelete('cascade');
-        $table->string('label'); // contoh: Pedas, Telur
-        $table->integer('additional_price')->default(0);
+              ->cascadeOnDelete();
+
+        $table->foreignId('option_group_id')
+              ->constrained()
+              ->cascadeOnDelete();
+
         $table->timestamps();
+
+        $table->unique(['menu_id', 'option_group_id']);
     });
 }
-
 
     /**
      * Reverse the migrations.
      */
     public function down(): void
     {
-        Schema::dropIfExists('menu_option_values');
+        Schema::dropIfExists('menu_option_group');
     }
 };

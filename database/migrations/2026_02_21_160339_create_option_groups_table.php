@@ -11,23 +11,20 @@ return new class extends Migration
      */
     public function up(): void
 {
-    Schema::create('menu_options', function (Blueprint $table) {
+    Schema::create('option_groups', function (Blueprint $table) {
         $table->id();
-        $table->foreignId('menu_id')
-              ->constrained()
-              ->onDelete('cascade');
-        $table->string('name'); // contoh: Level Pedas, Topping
-        $table->enum('type', ['single', 'multiple']); // radio / checkbox
+        $table->string('name');
+        $table->enum('type', ['single', 'multiple']);
+        $table->boolean('is_active')->default(true);
         $table->timestamps();
     });
 }
-
 
     /**
      * Reverse the migrations.
      */
     public function down(): void
     {
-        Schema::dropIfExists('menu_options');
+        Schema::dropIfExists('option_groups');
     }
 };

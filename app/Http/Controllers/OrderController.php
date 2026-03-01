@@ -13,7 +13,7 @@ class OrderController extends Controller
 
     $categories = Category::whereNull('parent_id')
     ->with([
-        'children.menus.options.values'
+        'children.menus.optionGroups.values'
     ])
     ->get();
 
@@ -47,12 +47,9 @@ class OrderController extends Controller
             ? json_encode($item['options']) 
             : null,
     ]);
-
-
-     
-
-    return response()->json(['order_id' => $order->id, 'total' => $order->total]);
 }
+return response()->json(['order_id' => $order->id, 'total' => $order->total]);
+
 
 }
 public function confirmPayment(Request $request, $id)

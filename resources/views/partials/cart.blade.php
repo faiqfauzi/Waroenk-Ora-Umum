@@ -34,10 +34,10 @@
             <div class="payment-option-box">
                 <h4 style="margin-bottom: 8px;">Metode Pembayaran</h4>
             
-                <label class="payment-option">
+                {{-- <label class="payment-option">
                     <input type="radio" name="payment_method" value="qris" checked>
                     <span>QRIS</span>
-                </label>
+                </label> --}}
             
                 <label class="payment-option">
                     <input type="radio" name="payment_method" value="kasir">
